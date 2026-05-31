@@ -47,7 +47,6 @@ def resolveMetadata(info):
         try:
             for key in entry:
                 if key == "uploader":
-                    print("Found uploader field in entry:", entry["uploader"])
                     artist = entry["uploader"]
                 if key == "playlist_uploader":
                     print("Found playlist_uploader field in entry:", entry["playlist_uploader"])
@@ -63,8 +62,6 @@ def resolveMetadata(info):
             release_date = info["modified_date"]
             if isinstance(release_date, str) and len(release_date) == 8 and release_date.isdigit():
                 release_date = f"{release_date[0:4]}-{release_date[4:6]}-{release_date[6:8]}"
-            print(info["uploader"],"date:", info.get("modified_date"))
-            print("Error resolving metadata for entry:", e)
             return artist, release_date
 
     return artist, release_date
@@ -126,15 +123,13 @@ def getJSRuntime():
 def downloadPlaylist(url, music_dir):
     global index
     if url in index:
-        playlist_folder = index[url]
+        playlist_folder = os.path.join(music_dir, index[url])
         playlist_path = os.path.join(playlist_folder, "playlist.json")
-        print("Found existing playlist folder for URL, checking for playlist.json:", playlist_path)
         if os.path.exists(playlist_path):
             with open(playlist_path, "r", encoding="utf-8") as f:
                 playlistData = json.load(f)
             if playlistData["playlist_title"].startswith("Album -"):
                 return playlistData
-
     if not os.path.exists(music_dir):
         os.makedirs(music_dir)
 
@@ -234,7 +229,7 @@ def handlePlaylist(url):
             daemon=True
         ).start()
 
-        playlist_folder = index[url]
+        playlist_folder = os.path.join(music_dir, index[url])
         playlist_path = os.path.join(playlist_folder, "playlist.json")
         if os.path.exists(playlist_folder):
             with open(playlist_path, "r", encoding="utf-8") as f:
@@ -246,7 +241,7 @@ def handlePlaylist(url):
     else:
         metadata = downloadPlaylist(url, music_dir)
         metadata = sanitizePlaylistData(metadata)
-        playlist_folder = os.path.join(music_dir, clean(metadata["playlist_title"]))
+        playlist_folder = os.path.join(clean(metadata["playlist_title"]))
         metadata["playlist_folder"] = playlist_folder
         index[url] = playlist_folder
         saveIndex(index)
@@ -257,7 +252,7 @@ class MusicPlayer:
     def __init__(self, url, comm):
         pygame.mixer.init()
         metadata = handlePlaylist(url)
-        self.folder = metadata.get("playlist_folder")
+        self.folder = os.path.join(music_dir, metadata.get("playlist_folder"))
         self.settings = loadSettings()
         self.comm = comm
 
@@ -272,7 +267,7 @@ class MusicPlayer:
         self.lock = threading.Lock()
         self.volume = self.settings.get("volume", 0.5)
 
-        pygame.mixer.music.setVolume(self.volume)
+        self.setVolume(self.volume)
     
     def loadTrack(self):
         searched = 0
@@ -311,7 +306,7 @@ class MusicPlayer:
         self.playing = True
         print(f"Now playing: {track.get('title') or 'Unknown Track'}")
         pygame.mixer.music.load(path)
-        pygame.mixer.music.setVolume(self.volume)
+        self.setVolume(self.volume)
 
     def play(self):
         self.loadTrack()
@@ -328,7 +323,7 @@ class MusicPlayer:
 
     def setVolume(self, new_volume):
         self.volume = max(0.0, min(1.0, new_volume))
-        pygame.mixer.music.setVolume(self.volume)
+        pygame.mixer.music.set_volume(self.volume)
         self.settings["volume"] = self.volume
         saveSettings(self.settings)
 

@@ -1,1 +1,1 @@
-"""BrainLauncher application package."""
+"""cartridgePlayer application package."""

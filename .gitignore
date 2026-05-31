@@ -1,0 +1,9 @@
+*.mp3
+*.bmp
+downloaded.txt
+playlist.json
+music/*/
+roms/*/
+videos/*/
+/helpers/__pycache__
+data/nfc_stats.json

@@ -98,25 +98,34 @@ class ESP32Communicator:
 
     # ---------------- IMAGE ---------------- #
 
-    def image_to_floyd_steinberg_1bit(self, path, save_debug=True):
-        img = Image.open(path).convert("L")
-        img = img.resize((256, 256))
+    def image_to_floyd_steinberg_1bit(self, path):
+        base, _ = os.path.splitext(path)
+        bmp_path = base + "_fs.bmp"
 
-        # Generate the left-side white border with rounded top-left and bottom-left corners
-        radius = 20
-        bw = img.convert("1")
+        if os.path.exists(bmp_path):
+            bw = Image.open(bmp_path).convert("1")
+        else:
+            img = Image.open(path).convert("L")
+            img = img.resize((256, 256))
+
+            radius = 20
+            bw = img.convert("1")
+            pixels = bw.load()
+
+            for y in range(256):
+                if y < radius:
+                    offset = radius - int((radius * radius - (radius - y) ** 2) ** 0.5)
+                    for x in range(offset):
+                        pixels[x, y] = 255
+                elif y >= 256 - radius:
+                    offset = radius - int((radius * radius - (y - (256 - radius)) ** 2) ** 0.5)
+                    for x in range(offset):
+                        pixels[x, y] = 255
+
+            bw.save(bmp_path)
+            print(f"Saved debug BMP: {bmp_path}")
+
         pixels = bw.load()
-
-        for y in range(256):
-            if y < radius:
-                offset = radius - int((radius * radius - (radius - y) ** 2) ** 0.5)
-                for x in range(offset):
-                    pixels[x, y] = 255
-            elif y >= 256 - radius:
-                offset = radius - int((radius * radius - (y - (256 - radius)) ** 2) ** 0.5)
-                for x in range(offset):
-                    pixels[x, y] = 255
-
         data = bytearray()
 
         for y in range(256):
@@ -124,7 +133,7 @@ class ESP32Communicator:
             bit_count = 0
 
             for x in range(256):
-                pixel = pixels[x, y]  # 0 or 255
+                pixel = pixels[x, y]
 
                 bit = 0 if pixel else 1
                 byte = (byte << 1) | bit
@@ -139,15 +148,7 @@ class ESP32Communicator:
                 byte <<= (8 - bit_count)
                 data.append(byte)
 
-        # 🔍 Debug output
-        if save_debug:
-            base, _ = os.path.splitext(path)
-            debug_path = base + "_fs.bmp"
-            bw.save(debug_path)
-            print(f"Saved debug BMP: {debug_path}")
-
         return data
-
     def sendArtwork(self, path):
         data = self.image_to_floyd_steinberg_1bit(path)
 
