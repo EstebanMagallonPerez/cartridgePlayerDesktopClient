@@ -185,6 +185,12 @@ def handleStateChange(data):
 def main():
     global comm, lastState, nfc_stats, stats
 
+    #check if music, roms, and video directories exist, if not create them
+    for folder in ["music", "roms", "videos"]:
+        path = os.path.join(cwd, folder)
+        if not os.path.exists(path):
+            os.makedirs(path)
+
     stats = Stats()
     nfc_stats = stats.loadNFCStats()
     comm = ESP32Communicator(port=ESP32_COM_PORT)

@@ -8,6 +8,8 @@ class Stats:
     def __init__(self, stats_file=None):
         cwd = os.getcwd()
         self.stats_file = stats_file or os.path.join(cwd, "data", "nfc_stats.json")
+        if not os.path.exists(os.path.dirname(self.stats_file)):
+            os.makedirs(os.path.dirname(self.stats_file))
 
         self.nfc_stats = None
         self.current_nfc_tag = None
