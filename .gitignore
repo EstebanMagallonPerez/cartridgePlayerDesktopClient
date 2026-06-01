@@ -7,3 +7,7 @@ downloaded.txt
 playlist.json
 music/*/
 roms/*/
+build/*
+dist/*
+manager.spec
+/helpers/__pycache__
