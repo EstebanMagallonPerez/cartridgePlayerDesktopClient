@@ -61,7 +61,6 @@ def launchGame(game):
         thumbnail = mapping["rvz"]["thumbnail"]
         romsubfolder = mapping["rvz"]["romFolder"]
 
-    
     core_path = core if os.path.isabs(core) else os.path.join(os.path.dirname(launchGamePath), "cores", core)
     rom_path = game if os.path.isabs(game) else os.path.join(ROMS_DIR, romsubfolder, game)
 
@@ -69,7 +68,6 @@ def launchGame(game):
         raise FileNotFoundError(f"RetroArch not found: {launchGamePath}")
     if not os.path.exists(rom_path):
         raise FileNotFoundError(f"ROM not found: {rom_path}")
-
 
     if game.endswith('.z64'):
         subprocessCommand = [launchGamePath, "-L", core_path, "-f", rom_path]
@@ -84,7 +82,7 @@ def quitRetroArchGracefully():
     ip = "127.0.0.1"
     port = 55355
     message = "QUIT\n"
-    
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.sendto(message.encode(), (ip, port))
     sock.close()

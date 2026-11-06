@@ -17,7 +17,6 @@ class Stats:
         self.current_session_type = None
         self.current_stats_visible = False
 
-
     def loadNFCStats(self):
         if os.path.exists(self.stats_file):
             with open(self.stats_file, "r", encoding="utf-8") as f:

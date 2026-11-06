@@ -4,7 +4,7 @@ import time
 import json
 import os
 from PIL import Image, ImageDraw
-from helpers.music import sanitizePlaylistData
+from helpers.playlist import sanitizePlaylistData
 
 class ESP32Communicator:
 
@@ -16,16 +16,28 @@ class ESP32Communicator:
         self.ser = None
         self._read_thread = None
         self._read_running = False
+        self._write_thread = None
         self.callback = None
 
         self.sendQueue = []
-        t1 = threading.Thread(target=self.handleQueue, daemon=True)
-        t1.start()
+        self.restartWriteThread()
 
         if auto_connect:
             self.connect()
             self.startReadThread()
-        
+
+    def restartWriteThread(self):
+        if self._write_thread and self._write_thread.is_alive():
+            return
+        self._write_thread = threading.Thread(target=self.handleQueue, daemon=True)
+        self._write_thread.start()
+        return self._write_thread
+
+    def restartReadThread(self):
+        if self._read_thread and self._read_thread.is_alive():
+            return
+        self.startReadThread()
+        return self._read_thread
 
     # ---------------- SERIAL ---------------- #
     def addToQueue(self, opcode, payload=b""):
@@ -165,7 +177,6 @@ class ESP32Communicator:
         if not os.path.exists(json_path):
             raise FileNotFoundError(f"Playlist file not found: {json_path}")
 
-
         with open(json_path, "r", encoding="utf-8") as f:
             data = sanitizePlaylistData(json.load(f))
 
@@ -209,7 +220,6 @@ class ESP32Communicator:
         payload = "|".join(data)
         self.addToQueue(0x08, payload)
 
-
     def updateNowPlaying(self, folder_path, current_index=0):
         json_path = os.path.join(folder_path, "playlist.json")
 
@@ -228,7 +238,7 @@ class ESP32Communicator:
 
         if artwork:
             self.sendArtwork(artwork)
-    
+
         self.setTitle(title)
 
         self.sendNowPlaying(tracks, current_index)
